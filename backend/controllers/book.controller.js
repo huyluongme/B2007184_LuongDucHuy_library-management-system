@@ -1,6 +1,6 @@
 const BOOK = require("../schemas/book.schema")
 const CATEGORY = require("../schemas/category.schema")
-
+const theodoimuonsach = require("../schemas/loanrecord.schema")
 class BookController {
     constructor() {
         this.createBook = this.createBook.bind(this)
@@ -13,32 +13,36 @@ class BookController {
         this.find = this.find.bind(this)
     }
     async createBook(req, res, next) {
-        const {
-            TENSACH,
-            THELOAI,
-            DONGIA,
-            SOQUYEN,
-            NAMXUATBAN,
-            NHAXUATBAN,
-            TACGIA,
-            MOTA,
-            HINHANH
-        } = req.body;
+        try {
+            const {
+                TENSACH,
+                THELOAI,
+                DONGIA,
+                SOQUYEN,
+                NAMXUATBAN,
+                NHAXUATBAN,
+                TACGIA,
+                MOTA,
+                HINHANH
+            } = req.body;
 
-        const newBook = await BOOK.create({
-            TENSACH: TENSACH,
-            DONGIA: DONGIA,
-            THELOAI: THELOAI,
-            SOQUYEN: SOQUYEN,
-            NAMXUATBAN: NAMXUATBAN,
-            NHAXUATBAN: NHAXUATBAN,
-            TACGIA: TACGIA,
-            MOTA: MOTA,
-            HINHANH: HINHANH
-        });
+            const newBook = await BOOK.create({
+                TENSACH: TENSACH,
+                DONGIA: DONGIA,
+                THELOAI: THELOAI,
+                SOQUYEN: SOQUYEN,
+                NAMXUATBAN: NAMXUATBAN,
+                NHAXUATBAN: NHAXUATBAN,
+                TACGIA: TACGIA,
+                MOTA: MOTA,
+                HINHANH: HINHANH
+            });
 
-        console.log(newBook);
-        res.json({ message: "Sách mới đã được tạo" });
+            console.log(newBook);
+            res.json({ message: "Sách mới đã được thêm" });
+        } catch (error) {
+            next(error)
+        }
     }
 
     async getBookInfor(req, res, next) {
@@ -149,7 +153,12 @@ class BookController {
             // Kiểm tra xem sách có tồn tại hay không
             const book = await BOOK.findById(id);
             if (!book) {
-                return res.status(404).json({ message: 'Sách không tồn tại.' });
+                return res.status(400).json({ message: 'Sách không tồn tại.' });
+            }
+
+            const loans = await theodoimuonsach.find({SACH: id})
+            for (let index = 0; index < loans.length; index++) {
+                await theodoimuonsach.findByIdAndDelete(loans[index].id)
             }
 
             // Nếu sách tồn tại, thực hiện xóa
@@ -181,15 +190,15 @@ class BookController {
             // Kiểm tra xem sách có tồn tại hay không
             let book = await BOOK.findById(_id);
             if (!book) {
-                return res.status(404).json({ message: 'Sách không tồn tại.' });
+                return res.status(400).json({ message: 'Sách không tồn tại.' });
             }
 
             // Cập nhật thông tin sách
-            book = await BOOK.findByIdAndUpdate(_id, { 
-                TENSACH: TENSACH, 
-                THELOAI: THELOAI, 
-                DONGIA: DONGIA, 
-                SOQUYEN: SOQUYEN, 
+            book = await BOOK.findByIdAndUpdate(_id, {
+                TENSACH: TENSACH,
+                THELOAI: THELOAI,
+                DONGIA: DONGIA,
+                SOQUYEN: SOQUYEN,
                 NAMXUATBAN: NAMXUATBAN,
                 NHAXUATBAN: NHAXUATBAN,
                 TACGIA: TACGIA,
@@ -197,7 +206,7 @@ class BookController {
                 HINHANH: HINHANH,
             });
 
-            res.json({ message: 'Thông tin sách đã được cập nhật thành công.', book });
+            res.json({ message: 'Thông tin sách đã được cập nhật thành công.'});
         } catch (error) {
             next(error);
         }

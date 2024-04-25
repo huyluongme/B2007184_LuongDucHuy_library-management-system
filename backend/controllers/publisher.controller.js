@@ -1,5 +1,5 @@
 const PUBLISHER = require("../schemas/publisher.schema")
-
+const BOOK = require("../schemas/book.schema")
 class PublisherController {
     async createPublisher(req, res, next) {
         try {
@@ -47,11 +47,23 @@ class PublisherController {
         try {
             const { id } = req.params;
             console.log(id)
-            let category = await PUBLISHER.findById(id);
-            if(!category){
+            let publisher = await PUBLISHER.findById(id);
+            if(!publisher){
                 return res.status(404).json({ message: 'Nhà xuất bản không tồn tại.' });
             }
-            category = await PUBLISHER.findByIdAndDelete(id)
+
+            const foundBooks = await BOOK.find({ NHAXUATBAN: publisher.id });
+            console.log(foundBooks.length)
+            for (let index = 0; index < foundBooks.length; index++) {
+                // const element = array[index];
+                console.log(foundBooks[index].TENSACH)
+                const loans = await theodoimuonsach.find({SACH: foundBooks[index].id})
+                for (let j = 0; j < loans.length; j++) {
+                    await theodoimuonsach.findByIdAndDelete(loans[j].id)
+                }
+                await BOOK.findByIdAndDelete(foundBooks[index].id);
+            }
+            publisher = await PUBLISHER.findByIdAndDelete(id)
             res.json({message: "Nhà xuất bản đã được xóa"});
         } catch (error) {
             next(error)

@@ -1,4 +1,6 @@
 const CATEGORY = require("../schemas/category.schema")
+const BOOK = require("../schemas/book.schema")
+const theodoimuonsach = require("../schemas/loanrecord.schema")
 
 class CategoryController {
     async createCategory(req, res, next) {
@@ -46,7 +48,7 @@ class CategoryController {
             console.log(_id)
             let category = await CATEGORY.findById(_id);
             if(!category){
-                return res.status(404).json({ message: 'Thể loại không tồn tại.' });
+                return res.status(400).json({ message: 'Thể loại không tồn tại.' });
             }
             category = await CATEGORY.findByIdAndUpdate(_id, {MATHELOAI:MATHELOAI, TENTHELOAI:TENTHELOAI})
             res.json({message: "Thể loại đã được cập nhật"});
@@ -58,11 +60,32 @@ class CategoryController {
     async deleteCategory(req, res, next){
         try {
             const { id } = req.params;
-            console.log(id)
+            console.log("id nè ba: " + id)
             let category = await CATEGORY.findById(id);
             if(!category){
                 return res.status(404).json({ message: 'Thể loại không tồn tại.' });
             }
+
+            const foundBooks = await BOOK.find({ THELOAI: category.id });
+            console.log(foundBooks.length)
+            for (let index = 0; index < foundBooks.length; index++) {
+                // const element = array[index];
+                console.log(foundBooks[index].TENSACH)
+                
+                const loans = await theodoimuonsach.find({SACH: foundBooks[index].id})
+                for (let j = 0; j < loans.length; j++) {
+                    await theodoimuonsach.findByIdAndDelete(loans[j].id)
+                }
+    
+                await BOOK.findByIdAndDelete(foundBooks[index].id);
+
+
+            }
+            // for (let b in foundBooks){
+            //     console.log(b.TENSACH)
+            //     await BOOK.findByIdAndDelete(b.id);
+            // }
+
             category = await CATEGORY.findByIdAndDelete(id)
             res.json({message: "Thể loại đã được xóa"});
         } catch (error) {
